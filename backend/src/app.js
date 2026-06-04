@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import authRoutes from "./modules/auth/routes/authRoutes.js";
+import recipeRoutes from "./modules/recipes/routes/recipeRoutes.js";
 
 const app = express();
 
@@ -17,6 +18,11 @@ app.use(express.json());
 app.use(
   "/api/auth",
   authRoutes
+);
+
+app.use(
+  "/api/recetas",
+  recipeRoutes
 );
 
 export default app;
