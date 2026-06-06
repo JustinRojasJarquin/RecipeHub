@@ -21,15 +21,21 @@ const parseRecipeId = (id) => {
   return recipeId;
 };
 
+// Lists recipes and supports filters by category, difficulty, and tags.
 export const listRecipes = async (
   req,
   res
 ) => {
   try {
-    const recipes = await getRecipes(
-      req.query.categoria ||
-        req.query.category
-    );
+    const recipes = await getRecipes({
+      category:
+        req.query.categoria ||
+        req.query.category,
+      difficulty:
+        req.query.dificultad ||
+        req.query.difficulty,
+      tags: req.query.tags
+    });
 
     res.status(200).json(recipes);
   } catch (error) {
@@ -66,6 +72,7 @@ export const showRecipe = async (
   }
 };
 
+// Creates a recipe linked to the authenticated user.
 export const storeRecipe = async (
   req,
   res

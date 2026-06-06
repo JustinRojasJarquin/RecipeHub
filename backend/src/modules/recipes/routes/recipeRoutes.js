@@ -12,16 +12,36 @@ import {
   protect
 } from "../../../middleware/authMiddleware.js";
 
+import {
+  createRecipeValidation,
+  handleValidationErrors,
+  updateRecipeValidation
+} from "../validators/recipeValidator.js";
+
 const router =
   express.Router();
 
+// Public recipe reading endpoints.
 router.get("/", listRecipes);
 
 router.get("/:id", showRecipe);
 
-router.post("/", protect, storeRecipe);
+// Protected recipe management endpoints.
+router.post(
+  "/",
+  protect,
+  createRecipeValidation,
+  handleValidationErrors,
+  storeRecipe
+);
 
-router.put("/:id", protect, editRecipe);
+router.put(
+  "/:id",
+  protect,
+  updateRecipeValidation,
+  handleValidationErrors,
+  editRecipe
+);
 
 router.delete(
   "/:id",
