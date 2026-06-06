@@ -144,6 +144,24 @@
   align-items: center;
 }
 
+.ingredient-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ingredient-field {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.ingredient-cantidad {
+  max-width: 90px;
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;

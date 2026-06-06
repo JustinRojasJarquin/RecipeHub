@@ -1,69 +1,72 @@
-const mockRecipes = [
-  {
-    id: 1,
-    title: 'Tacos de pollo y aguacate',
-    description: 'Una receta fácil para una cena rápida con sabor fresco.',
-    category: 'Cena',
-    prepTime: 20,
-    difficulty: 'Fácil',
-    ingredients: ['Tortillas', 'Pollo', 'Aguacate', 'Cebolla', 'Limón'],
-    steps: ['Cocina el pollo con especias.', 'Sirve en tortillas con aguacate y cebolla.', 'Termina con limón.'],
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=900&q=80',
-    rating: 4.5,
-  },
-  {
-    id: 2,
-    title: 'Ensalada mediterránea',
-    description: 'Ligera, colorida y perfecta para el almuerzo.',
-    category: 'Almuerzo',
-    prepTime: 15,
-    difficulty: 'Fácil',
-    ingredients: ['Tomate', 'Pepino', 'Queso feta', 'Aceitunas', 'Olivo'],
-    steps: ['Corta todos los vegetales.', 'Mezcla y añade feta y aceitunas.', 'Aliña con aceite de oliva.'],
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80',
-    rating: 4.2,
-  },
-]
+import api from "./api";
 
-let recipes = [...mockRecipes]
+const capitalize = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
-export const getRecipes = (filters = {}) => {
-  return recipes.filter((recipe) => {
-    const matchesQuery = filters.query
-      ? recipe.title.toLowerCase().includes(filters.query.toLowerCase()) ||
-        recipe.description.toLowerCase().includes(filters.query.toLowerCase())
-      : true
+// ingredientes vienen del backend como [{nombre, cantidad, unidad}] — se usan tal cual
+const mapRecipeFromApi = (recipe) => ({
+  id: recipe._id,
+  title: recipe.titulo,
+  description: recipe.descripcion,
+  category: capitalize(recipe.categoria),
+  difficulty: recipe.dificultad,
+  ingredients: recipe.ingredientes || [],
+  steps: recipe.pasos || [],
+  tags: recipe.tags || [],
+  image: recipe.imagenUrl || "",
+  prepTime: recipe.tiempoMin || 0,
+  porciones: recipe.porciones || 1,
+  autor: recipe.autorId,
+  rating: 0,
+});
 
-    const matchesCategory = filters.category && filters.category !== 'Todas'
-      ? recipe.category === filters.category
-      : true
+const mapRecipeToApi = (recipe) => ({
+  titulo: recipe.title,
+  descripcion: recipe.description,
+  categoria: recipe.category,
+  dificultad: recipe.difficulty,
+  ingredientes: (recipe.ingredients || []).filter((i) => i.nombre?.trim()),
+  pasos: (recipe.steps || []).filter(Boolean),
+  tags: recipe.tags || [],
+  imagenUrl: recipe.image || "",
+  tiempoMin: Number(recipe.prepTime) || 1,
+  porciones: Number(recipe.porciones) || 1,
+});
 
-    const matchesDifficulty = filters.difficulty && filters.difficulty !== 'Todas'
-      ? recipe.difficulty === filters.difficulty
-      : true
-
-    return matchesQuery && matchesCategory && matchesDifficulty
-  })
-}
-
-export const getRecipeById = (id) => recipes.find((recipe) => recipe.id === Number(id)) || null
-
-export const createRecipe = (recipe) => {
-  const newRecipe = {
-    id: Date.now(),
-    ...recipe,
-    rating: recipe.rating || 0,
+export const getRecipes = async (filters = {}) => {
+  const params = {};
+  if (filters.query) params.q = filters.query;
+  if (filters.category && filters.category !== "Todas") {
+    params.categoria = filters.category;
+  }
+  if (filters.difficulty && filters.difficulty !== "Todas") {
+    params.dificultad = filters.difficulty;
   }
 
-  recipes = [newRecipe, ...recipes]
-  return newRecipe
-}
+  const response = await api.get("/recetas", { params });
+  return response.data.map(mapRecipeFromApi);
+};
 
-export const updateRecipe = (id, recipe) => {
-  recipes = recipes.map((item) => (item.id === Number(id) ? { ...item, ...recipe } : item))
-  return getRecipeById(id)
-}
+export const getRecipeById = async (id) => {
+  const response = await api.get(`/recetas/${id}`);
+  return mapRecipeFromApi(response.data);
+};
 
-export const deleteRecipe = (id) => {
-  recipes = recipes.filter((recipe) => recipe.id !== Number(id))
-}
+export const createRecipe = async (recipe) => {
+  const response = await api.post("/recetas", mapRecipeToApi(recipe));
+  return mapRecipeFromApi(response.data.recipe);
+};
+
+export const updateRecipe = async (id, recipe) => {
+  const response = await api.put(`/recetas/${id}`, mapRecipeToApi(recipe));
+  return mapRecipeFromApi(response.data.recipe);
+};
+
+export const deleteRecipe = async (id) => {
+  await api.delete(`/recetas/${id}`);
+};
+
+export const getMyRecipes = async (userId) => {
+  const response = await api.get("/recetas", { params: { autorId: userId } });
+  return response.data.map(mapRecipeFromApi);
+};

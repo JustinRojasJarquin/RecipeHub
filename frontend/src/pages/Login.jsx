@@ -36,7 +36,7 @@ function Login({ onSwitch }) {
         data.token
       );
 
-      navigate("/profile");
+      navigate("/home");
 
     } catch (error) {
 

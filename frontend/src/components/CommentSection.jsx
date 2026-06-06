@@ -1,33 +1,68 @@
-import { useState } from 'react'
-import CommentForm from './CommentForm'
-import { addComment, deleteComment, getComments } from '../services/commentService'
+import { useCallback, useEffect, useState } from "react";
+import CommentForm from "./CommentForm";
+import RatingStars from "./RatingStars";
+import { addComment, deleteComment, getComments } from "../services/commentService";
+import { useAuth } from "../hooks/useAuth";
 
-function CommentSection({ recipeId }) {
-  const [comments, setComments] = useState(() => getComments(recipeId))
+function CommentSection({ recipeId, onPromedioChange }) {
+  const { user } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [promedio, setPromedio] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const refreshComments = () => {
-    setComments(getComments(recipeId))
-  }
+  const fetchComments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getComments(recipeId);
+      setComments(data.comments);
+      setPromedio(data.promedio);
+      onPromedioChange?.(data.promedio);
+    } catch {
+      setError("No se pudieron cargar los comentarios.");
+    } finally {
+      setLoading(false);
+    }
+  }, [recipeId, onPromedioChange]);
 
-  const handleSubmit = (comment) => {
-    addComment(recipeId, comment)
-    refreshComments()
-  }
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
-  const handleDelete = (commentId) => {
-    deleteComment(recipeId, commentId)
-    refreshComments()
-  }
+  const handleSubmit = async (comment) => {
+    try {
+      await addComment(recipeId, comment);
+      await fetchComments();
+    } catch (err) {
+      alert(err.response?.data?.message || "No se pudo publicar el comentario.");
+    }
+  };
+
+  const handleDelete = async (commentId) => {
+    try {
+      await deleteComment(commentId);
+      await fetchComments();
+    } catch {
+      alert("No se pudo eliminar el comentario.");
+    }
+  };
 
   return (
     <section className="stack">
-      <CommentForm onSubmit={handleSubmit} />
+      {user && <CommentForm onSubmit={handleSubmit} />}
 
       <article className="panel">
         <h3>Comentarios ({comments.length})</h3>
-        {comments.length === 0 ? (
-          <p>No hay comentarios todavía.</p>
-        ) : (
+
+        {loading && <p>Cargando comentarios...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        {!loading && comments.length === 0 && (
+          <p>No hay comentarios todavía. ¡Sé el primero!</p>
+        )}
+
+        {!loading && (
           <ul className="comment-list">
             {comments.map((comment) => (
               <li key={comment.id} className="comment-card">
@@ -36,10 +71,16 @@ function CommentSection({ recipeId }) {
                   <p>{comment.text}</p>
                 </div>
                 <div className="comment-actions">
-                  <span>⭐ {comment.rating}/5</span>
-                  <button type="button" className="ghost-button" onClick={() => handleDelete(comment.id)}>
-                    Eliminar
-                  </button>
+                  <RatingStars value={comment.rating} onChange={() => {}} readOnly />
+                  {user && (user._id === comment.userId || user.id === comment.userId) && (
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => handleDelete(comment.id)}
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -47,7 +88,7 @@ function CommentSection({ recipeId }) {
         )}
       </article>
     </section>
-  )
+  );
 }
 
-export default CommentSection
+export default CommentSection;

@@ -1,46 +1,30 @@
-const mockComments = {
-  1: [
-    { id: 1, author: 'Angélica', text: 'Muy buena receta, fácil de seguir.', rating: 5 },
-    { id: 2, author: 'Cris', text: 'Ideal para una cena rápida.', rating: 4 },
-  ],
-  2: [
-    { id: 3, author: 'Mica', text: 'Perfecta para el almuerzo.', rating: 5 },
-  ],
-}
+import api from "./api";
 
-let comments = structuredClone(mockComments)
+const mapComment = (comment) => ({
+  id: comment._id,
+  author: comment.usuario?.name || "Anónimo",
+  userId: comment.usuario?._id,
+  text: comment.texto,
+  rating: comment.calificacion,
+  createdAt: comment.createdAt,
+});
 
-export const getComments = (recipeId) => comments[recipeId] || []
+export const getComments = async (recipeId) => {
+  const response = await api.get(`/recetas/${recipeId}/comentarios`);
+  return {
+    comments: response.data.comments.map(mapComment),
+    promedio: response.data.promedio,
+  };
+};
 
-export const addComment = (recipeId, comment) => {
-  const nextComment = {
-    id: Date.now(),
-    author: comment.author || 'Anónimo',
-    text: comment.text,
-    rating: Number(comment.rating) || 0,
-  }
+export const addComment = async (recipeId, comment) => {
+  const response = await api.post(`/recetas/${recipeId}/comentarios`, {
+    texto: comment.text,
+    calificacion: comment.rating,
+  });
+  return mapComment(response.data.comment);
+};
 
-  comments = {
-    ...comments,
-    [recipeId]: [...(comments[recipeId] || []), nextComment],
-  }
-
-  return nextComment
-}
-
-export const deleteComment = (recipeId, commentId) => {
-  comments = {
-    ...comments,
-    [recipeId]: (comments[recipeId] || []).filter((comment) => comment.id !== Number(commentId)),
-  }
-}
-
-export const getAverageRating = (recipeId) => {
-  const list = comments[recipeId] || []
-
-  if (list.length === 0) {
-    return 0
-  }
-
-  return list.reduce((sum, comment) => sum + comment.rating, 0) / list.length
-}
+export const deleteComment = async (commentId) => {
+  await api.delete(`/comentarios/${commentId}`);
+};

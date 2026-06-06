@@ -1,26 +1,24 @@
-import { useState } from 'react'
-import RatingStars from './RatingStars'
+import { useState } from "react";
+import RatingStars from "./RatingStars";
 
 function CommentForm({ onSubmit }) {
-  const [author, setAuthor] = useState('')
-  const [text, setText] = useState('')
-  const [rating, setRating] = useState(5)
+  const [text, setText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    onSubmit({ author, text, rating })
-    setAuthor('')
-    setText('')
-    setRating(5)
-  }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!text.trim()) return;
+    setSubmitting(true);
+    await onSubmit({ text, rating });
+    setText("");
+    setRating(5);
+    setSubmitting(false);
+  };
 
   return (
     <form className="panel stack" onSubmit={handleSubmit}>
       <h3>Deja tu opinión</h3>
-      <label className="field">
-        <span>Nombre</span>
-        <input value={author} onChange={(event) => setAuthor(event.target.value)} required />
-      </label>
       <label className="field">
         <span>Comentario</span>
         <textarea
@@ -28,15 +26,18 @@ function CommentForm({ onSubmit }) {
           value={text}
           onChange={(event) => setText(event.target.value)}
           required
+          placeholder="Escribe tu comentario..."
         />
       </label>
       <label className="field">
         <span>Calificación</span>
         <RatingStars value={rating} onChange={setRating} />
       </label>
-      <button type="submit" className="button">Publicar comentario</button>
+      <button type="submit" className="button" disabled={submitting}>
+        {submitting ? "Publicando..." : "Publicar comentario"}
+      </button>
     </form>
-  )
+  );
 }
 
-export default CommentForm
+export default CommentForm;

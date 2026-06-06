@@ -1,7 +1,7 @@
 import IngredientManager from './IngredientManager'
 import StepManager from './StepManager'
 
-function RecipeForm({ formData, onChange, onSubmit, submitLabel = 'Guardar receta' }) {
+function RecipeForm({ formData, onChange, onSubmit, submitLabel = 'Guardar receta', disabled = false }) {
   const updateField = (field, value) => onChange({ ...formData, [field]: value })
 
   return (
@@ -49,6 +49,17 @@ function RecipeForm({ formData, onChange, onSubmit, submitLabel = 'Guardar recet
         </label>
 
         <label className="field">
+          <span>Porciones</span>
+          <input
+            type="number"
+            min="1"
+            value={formData.porciones}
+            onChange={(event) => updateField('porciones', Number(event.target.value))}
+            required
+          />
+        </label>
+
+        <label className="field">
           <span>Dificultad</span>
           <select
             value={formData.difficulty}
@@ -80,7 +91,7 @@ function RecipeForm({ formData, onChange, onSubmit, submitLabel = 'Guardar recet
         onChange={(steps) => updateField('steps', steps)}
       />
 
-      <button type="submit" className="button">{submitLabel}</button>
+      <button type="submit" className="button" disabled={disabled}>{submitLabel}</button>
     </form>
   )
 }

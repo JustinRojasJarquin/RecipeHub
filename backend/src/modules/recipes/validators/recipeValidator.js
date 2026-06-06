@@ -1,199 +1,93 @@
-import {
-  body,
-  validationResult
-} from "express-validator";
+import { body, validationResult } from "express-validator";
 
-const allowedDifficulties = [
-  "facil",
-  "media",
-  "dificil"
-];
+const ALLOWED_DIFFICULTIES = ["Fácil", "Media", "Difícil"];
 
-// Allows arrays or comma-separated text for ingredients, steps, and tags.
-const normalizeTextArray = (value) => {
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  if (!Array.isArray(value)) {
-    return value;
-  }
-
-  return value
-    .map((item) =>
-      typeof item === "string" ? item.trim() : item
-    )
-    .filter(Boolean);
+const textField = (fieldName, message, { optional = false } = {}) => {
+  const validator = body(fieldName);
+  if (optional) validator.optional();
+  return validator.trim().notEmpty().withMessage(message);
 };
 
-const validateTextArray = (
-  fieldName,
-  { optional = true } = {}
-) => {
+const positiveInt = (fieldName, message, { optional = false } = {}) => {
   const validator = body(fieldName);
-
-  if (optional) {
-    validator.optional();
-  }
-
+  if (optional) validator.optional();
   return validator
-    .customSanitizer(normalizeTextArray)
-    .isArray({
-      min: 1
-    })
-    .withMessage(`${fieldName} debe tener al menos un elemento`)
-    .bail()
-    .custom((items) =>
-      items.every(
-        (item) =>
-          typeof item === "string" &&
-          item.trim().length > 0
-      )
-    )
-    .withMessage(`${fieldName} solo acepta textos`);
-};
-
-const textField = (
-  fieldName,
-  message,
-  { optional = false } = {}
-) => {
-  const validator = body(fieldName);
-
-  if (optional) {
-    validator.optional();
-  }
-
-  return validator
-    .trim()
-    .notEmpty()
+    .isInt({ min: 1 })
     .withMessage(message);
 };
 
-const difficultyField = ({
-  optional = false
-} = {}) => {
-  const validator =
-    body("dificultad");
-
-  if (optional) {
-    validator.optional();
-  }
-
+const difficultyField = ({ optional = false } = {}) => {
+  const validator = body("dificultad");
+  if (optional) validator.optional();
   return validator
     .trim()
-    .toLowerCase()
-    .isIn(allowedDifficulties)
-    .withMessage(
-      "La dificultad debe ser facil, media o dificil"
-    );
+    .isIn(ALLOWED_DIFFICULTIES)
+    .withMessage("La dificultad debe ser Fácil, Media o Difícil");
 };
 
-const optionalTrimmedField = (fieldName) =>
-  body(fieldName)
-    .optional()
-    .trim();
+// Validates each step is a non-empty string
+const stepsField = ({ optional = false } = {}) => {
+  const base = optional ? body("pasos").optional() : body("pasos");
+  return [
+    base
+      .isArray({ min: 1 })
+      .withMessage("Debe agregar al menos un paso"),
+    body("pasos.*")
+      .trim()
+      .notEmpty()
+      .withMessage("Cada paso debe ser un texto no vacío")
+  ];
+};
 
-const optionalUrlField = (fieldName) =>
-  body("imagen")
-    .optional({
-      values: "falsy"
-    })
-    .trim()
-    .isURL()
-    .withMessage(`${fieldName} debe ser una URL valida`);
+// Validates each ingredient has nombre (string), cantidad (number > 0), unidad (string)
+const ingredientesField = ({ optional = false } = {}) => {
+  const base = optional ? body("ingredientes").optional() : body("ingredientes");
+  return [
+    base
+      .isArray({ min: 1 })
+      .withMessage("Debe agregar al menos un ingrediente"),
+    body("ingredientes.*.nombre")
+      .trim()
+      .notEmpty()
+      .withMessage("El nombre de cada ingrediente es obligatorio"),
+    body("ingredientes.*.cantidad")
+      .isFloat({ min: 0.01 })
+      .withMessage("La cantidad de cada ingrediente debe ser mayor a 0"),
+    body("ingredientes.*.unidad")
+      .trim()
+      .notEmpty()
+      .withMessage("La unidad de cada ingrediente es obligatoria")
+  ];
+};
 
-// Validates all required fields when creating a recipe.
 export const createRecipeValidation = [
   textField("titulo", "El titulo es obligatorio"),
-  optionalTrimmedField("descripcion"),
+  textField("descripcion", "La descripcion es obligatoria"),
   textField("categoria", "La categoria es obligatoria"),
+  positiveInt("tiempoMin", "El tiempo de preparacion debe ser mayor a 0"),
+  positiveInt("porciones", "Las porciones deben ser mayor a 0"),
   difficultyField(),
-  validateTextArray("ingredientes", {
-    optional: false
-  }),
-  validateTextArray("pasos"),
-  validateTextArray("tags"),
-  optionalTrimmedField("instrucciones"),
-  optionalUrlField("imagen"),
-
-  body()
-    .custom((value) => {
-      const hasInstructions =
-        typeof value.instrucciones === "string" &&
-        value.instrucciones.trim().length > 0;
-
-      const hasSteps =
-        Array.isArray(value.pasos) &&
-        value.pasos.length > 0;
-
-      if (!hasInstructions && !hasSteps) {
-        throw new Error(
-          "Debe agregar instrucciones o pasos"
-        );
-      }
-
-      return true;
-    })
+  ...ingredientesField({ optional: false }),
+  ...stepsField({ optional: false }),
+  body("tags").optional().isArray().withMessage("Los tags deben ser un arreglo"),
+  body("imagenUrl").optional({ values: "falsy" }).trim().isURL().withMessage("imagenUrl debe ser una URL valida")
 ];
 
-// Validates only the fields that are sent when editing a recipe.
 export const updateRecipeValidation = [
-  textField("titulo", "El titulo no puede estar vacio", {
-    optional: true
-  }),
-  optionalTrimmedField("descripcion"),
-  textField("categoria", "La categoria no puede estar vacia", {
-    optional: true
-  }),
-  difficultyField({
-    optional: true
-  }),
-  validateTextArray("ingredientes"),
-  validateTextArray("pasos"),
-  validateTextArray("tags"),
-  optionalTrimmedField("instrucciones"),
-  optionalUrlField("imagen"),
-
-  body()
-    .custom((value) => {
-      const isClearingInstructions =
-        Object.prototype.hasOwnProperty.call(
-          value,
-          "instrucciones"
-        ) &&
-        typeof value.instrucciones === "string" &&
-        value.instrucciones.trim().length === 0;
-
-      const isClearingSteps =
-        Object.prototype.hasOwnProperty.call(
-          value,
-          "pasos"
-        ) &&
-        Array.isArray(value.pasos) &&
-        value.pasos.length === 0;
-
-      if (isClearingInstructions && isClearingSteps) {
-        throw new Error(
-          "Debe conservar instrucciones o pasos"
-        );
-      }
-
-      return true;
-    })
+  textField("titulo", "El titulo no puede estar vacio", { optional: true }),
+  textField("descripcion", "La descripcion no puede estar vacia", { optional: true }),
+  textField("categoria", "La categoria no puede estar vacia", { optional: true }),
+  positiveInt("tiempoMin", "El tiempo de preparacion debe ser mayor a 0", { optional: true }),
+  positiveInt("porciones", "Las porciones deben ser mayor a 0", { optional: true }),
+  difficultyField({ optional: true }),
+  ...ingredientesField({ optional: true }),
+  ...stepsField({ optional: true }),
+  body("tags").optional().isArray().withMessage("Los tags deben ser un arreglo"),
+  body("imagenUrl").optional({ values: "falsy" }).trim().isURL().withMessage("imagenUrl debe ser una URL valida")
 ];
 
-// Returns validation errors in a consistent API response.
-export const handleValidationErrors = (
-  req,
-  res,
-  next
-) => {
+export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-
   if (!errors.isEmpty()) {
     return res.status(400).json({
       message: "Datos de receta invalidos",
@@ -203,6 +97,5 @@ export const handleValidationErrors = (
       }))
     });
   }
-
   next();
 };

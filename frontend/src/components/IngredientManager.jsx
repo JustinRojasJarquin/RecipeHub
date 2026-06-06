@@ -1,37 +1,65 @@
 function IngredientManager({ ingredients, onChange }) {
-  const updateIngredient = (index, value) => {
-    const next = [...ingredients]
-    next[index] = value
-    onChange(next)
-  }
+  const update = (index, field, value) => {
+    const next = ingredients.map((ing, i) =>
+      i === index ? { ...ing, [field]: value } : ing
+    );
+    onChange(next);
+  };
 
-  const addIngredient = () => {
-    onChange([...ingredients, ''])
-  }
+  const add = () => {
+    onChange([...ingredients, { nombre: "", cantidad: "", unidad: "" }]);
+  };
 
-  const removeIngredient = (index) => {
-    onChange(ingredients.filter((_, itemIndex) => itemIndex !== index))
-  }
+  const remove = (index) => {
+    onChange(ingredients.filter((_, i) => i !== index));
+  };
 
   return (
-    <section className="panel">
+    <section className="panel stack">
       <div className="panel-header">
         <h3>Ingredientes</h3>
-        <button type="button" className="button secondary" onClick={addIngredient}>+ Añadir</button>
+        <button type="button" className="button secondary" onClick={add}>
+          + Añadir
+        </button>
       </div>
+
       {ingredients.map((ingredient, index) => (
-        <div key={index} className="inline-field">
+        <div key={index} className="ingredient-row">
           <input
             type="text"
-            value={ingredient}
-            onChange={(event) => updateIngredient(index, event.target.value)}
-            placeholder="Ej. 2 tomates"
+            placeholder="Nombre (ej. harina)"
+            value={ingredient.nombre}
+            onChange={(e) => update(index, "nombre", e.target.value)}
+            className="ingredient-field"
           />
-          <button type="button" className="ghost-button" onClick={() => removeIngredient(index)}>Eliminar</button>
+          <input
+            type="number"
+            placeholder="Cantidad"
+            min="0"
+            step="0.01"
+            value={ingredient.cantidad}
+            onChange={(e) => update(index, "cantidad", e.target.value)}
+            className="ingredient-field ingredient-cantidad"
+          />
+          <input
+            type="text"
+            placeholder="Unidad (ej. tazas)"
+            value={ingredient.unidad}
+            onChange={(e) => update(index, "unidad", e.target.value)}
+            className="ingredient-field"
+          />
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => remove(index)}
+            disabled={ingredients.length === 1}
+          >
+            Eliminar
+          </button>
         </div>
       ))}
     </section>
-  )
+  );
 }
 
-export default IngredientManager
+export default IngredientManager;

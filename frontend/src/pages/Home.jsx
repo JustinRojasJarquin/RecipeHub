@@ -1,19 +1,35 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import RecipeCard from '../components/RecipeCard'
-import SearchBar from '../components/SearchBar'
-import FilterBar from '../components/FilterBar'
-import { getRecipes } from '../services/recipeService'
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import RecipeCard from "../components/RecipeCard";
+import SearchBar from "../components/SearchBar";
+import FilterBar from "../components/FilterBar";
+import { getRecipes } from "../services/recipeService";
 
 function Home() {
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('Todas')
-  const [difficulty, setDifficulty] = useState('Todas')
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("Todas");
+  const [difficulty, setDifficulty] = useState("Todas");
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const recipes = useMemo(
-    () => getRecipes({ query, category, difficulty }),
-    [query, category, difficulty],
-  )
+  const fetchRecipes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getRecipes({ query, category, difficulty });
+      setRecipes(data);
+    } catch {
+      setError("No se pudieron cargar las recetas. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }, [query, category, difficulty]);
+
+  useEffect(() => {
+    const timeout = setTimeout(fetchRecipes, 300);
+    return () => clearTimeout(timeout);
+  }, [fetchRecipes]);
 
   return (
     <main className="page-shell">
@@ -21,9 +37,10 @@ function Home() {
         <div>
           <p className="eyebrow">RecipeHub</p>
           <h1>Explora recetas y comparte tu opinión</h1>
-          <p>Esta vista inicial sirve de base para la parte de recetas y comentarios que seguirá Angélica.</p>
         </div>
-        <Link className="button" to="/recipes/new">Crear receta</Link>
+        <Link className="button" to="/recipes/new">
+          Crear receta
+        </Link>
       </header>
 
       <section className="panel stack">
@@ -36,13 +53,23 @@ function Home() {
         />
       </section>
 
-      <section className="cards-grid">
-        {recipes.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} />
-        ))}
-      </section>
+      {loading && <p className="page-shell">Cargando recetas...</p>}
+
+      {error && <p className="page-shell" style={{ color: "red" }}>{error}</p>}
+
+      {!loading && !error && recipes.length === 0 && (
+        <p className="page-shell">No se encontraron recetas.</p>
+      )}
+
+      {!loading && !error && (
+        <section className="cards-grid">
+          {recipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </section>
+      )}
     </main>
-  )
+  );
 }
 
-export default Home
+export default Home;
