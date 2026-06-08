@@ -1,0 +1,32 @@
+name: Deploy RecipeHub
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/azureuser/RecipeHub
+            git pull origin develop
+
+            cd backend
+            docker compose up -d --build
+
+            cd ../frontend
+            npm install
+            npm run build
+
+            sudo rm -rf /var/www/recipehub/*
+            sudo cp -r dist/* /var/www/recipehub/
+            sudo systemctl reload nginx
