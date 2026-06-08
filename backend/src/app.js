@@ -28,4 +28,11 @@ app.use(
 
 app.use("/api", commentRoutes);
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default app;
