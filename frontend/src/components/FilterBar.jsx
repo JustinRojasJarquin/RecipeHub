@@ -1,6 +1,12 @@
-function FilterBar({ category, difficulty, onCategoryChange, onDifficultyChange }) {
+function FilterBar({
+  category,
+  difficulty,
+  onCategoryChange,
+  onDifficultyChange,
+  onClear,
+}) {
   return (
-    <div className="filters-grid">
+    <div className="filters-grid filter-bar">
       <label className="field">
         <span>Categoría</span>
         <select value={category} onChange={(event) => onCategoryChange(event.target.value)}>
@@ -20,8 +26,14 @@ function FilterBar({ category, difficulty, onCategoryChange, onDifficultyChange 
           <option>Difícil</option>
         </select>
       </label>
+
+      {onClear && (
+        <button type="button" className="button secondary filter-clear" onClick={onClear}>
+          Limpiar filtros
+        </button>
+      )}
     </div>
-  )
+  );
 }
 
-export default FilterBar
+export default FilterBar;

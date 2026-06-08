@@ -18,7 +18,7 @@ function CommentForm({ onSubmit }) {
 
   return (
     <form className="panel stack" onSubmit={handleSubmit}>
-      <h3>Deja tu opinión</h3>
+      <h2>Deja tu opinión</h2>
       <label className="field">
         <span>Comentario</span>
         <textarea

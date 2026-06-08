@@ -35,11 +35,14 @@ function Profile() {
       </header>
 
       <section className="panel stack">
-        <h2>Mis recetas publicadas</h2>
+        <div className="panel-header">
+          <h2>Mis recetas publicadas</h2>
+          <span className="difficulty-pill">{recipes.length}</span>
+        </div>
 
         {loading && <p>Cargando tus recetas...</p>}
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="alert-message">{error}</p>}
 
         {!loading && !error && recipes.length === 0 && (
           <p>

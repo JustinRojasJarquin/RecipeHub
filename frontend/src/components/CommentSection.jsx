@@ -7,7 +7,6 @@ import { useAuth } from "../hooks/useAuth";
 function CommentSection({ recipeId, onPromedioChange }) {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
-  const [promedio, setPromedio] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,7 +16,6 @@ function CommentSection({ recipeId, onPromedioChange }) {
     try {
       const data = await getComments(recipeId);
       setComments(data.comments);
-      setPromedio(data.promedio);
       onPromedioChange?.(data.promedio);
     } catch {
       setError("No se pudieron cargar los comentarios.");
@@ -27,7 +25,17 @@ function CommentSection({ recipeId, onPromedioChange }) {
   }, [recipeId, onPromedioChange]);
 
   useEffect(() => {
-    fetchComments();
+    let active = true;
+
+    const loadComments = async () => {
+      if (active) await fetchComments();
+    };
+
+    loadComments();
+
+    return () => {
+      active = false;
+    };
   }, [fetchComments]);
 
   const handleSubmit = async (comment) => {
@@ -52,11 +60,14 @@ function CommentSection({ recipeId, onPromedioChange }) {
     <section className="stack">
       {user && <CommentForm onSubmit={handleSubmit} />}
 
-      <article className="panel">
-        <h3>Comentarios ({comments.length})</h3>
+      <article className="panel stack">
+        <div className="panel-header">
+          <h2>Comentarios</h2>
+          <span className="difficulty-pill">{comments.length}</span>
+        </div>
 
         {loading && <p>Cargando comentarios...</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="alert-message">{error}</p>}
 
         {!loading && comments.length === 0 && (
           <p>No hay comentarios todavía. ¡Sé el primero!</p>

@@ -1,25 +1,22 @@
 import { useState } from "react";
 import { ChefHat } from "lucide-react";
-import { login } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { login } from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
 
 function Login({ onSwitch }) {
-
   const navigate = useNavigate();
-
   const { loginUser } = useAuth();
 
   const [form, setForm] = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]:
-        e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -27,120 +24,56 @@ function Login({ onSwitch }) {
     e.preventDefault();
 
     try {
-
-      const data =
-        await login(form);
-
-      loginUser(
-        data.user,
-        data.token
-      );
-
+      const data = await login(form);
+      loginUser(data.user, data.token);
       navigate("/home");
-
     } catch (error) {
-
-      alert(
-        error.response?.data?.message ||
-        "Credenciales inválidas"
-      );
+      alert(error.response?.data?.message || "Credenciales inválidas");
     }
   };
 
   return (
-    <div
-      className="
-        bg-white
-        shadow-2xl
-        rounded-3xl
-        p-10
-        h-full
-        border
-        border-orange-100
-      "
-    >
-
-      <div className="flex flex-col items-center mb-8">
-
-        <ChefHat
-          size={60}
-          className="text-orange-500"
-        />
-
-        <h1 className="text-4xl font-bold text-orange-600 mt-3">
-          RecipeHub
-        </h1>
-
-        <p className="text-gray-500 mt-2">
-          Bienvenido nuevamente
-        </p>
-
+    <div className="auth-card">
+      <div className="auth-header">
+        <ChefHat size={58} className="text-orange-500" />
+        <h1>RecipeHub</h1>
+        <p>Bienvenido nuevamente</p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form className="stack" onSubmit={handleSubmit}>
+        <label className="field">
+          <span>Correo electrónico</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="tu@email.com"
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Correo electrónico"
-          className="
-            w-full
-            border
-            p-3
-            rounded-xl
-            mb-4
-          "
-          onChange={handleChange}
-        />
+        <label className="field">
+          <span>Contraseña</span>
+          <input
+            type="password"
+            name="password"
+            placeholder="Tu contraseña"
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Contraseña"
-          className="
-            w-full
-            border
-            p-3
-            rounded-xl
-            mb-6
-          "
-          onChange={handleChange}
-        />
-
-        <button
-          className="
-            w-full
-            bg-orange-500
-            hover:bg-orange-600
-            text-white
-            py-3
-            rounded-xl
-            font-semibold
-          "
-        >
-          Iniciar Sesión
+        <button className="button" type="submit">
+          Iniciar sesión
         </button>
-
       </form>
 
-      <p className="text-center mt-6 text-gray-600">
-
+      <p className="auth-switch">
         ¿No tienes cuenta?{" "}
-
-        <button
-          type="button"
-          onClick={onSwitch}
-          className="
-            text-orange-500
-            font-semibold
-            hover:text-orange-700
-          "
-        >
+        <button type="button" onClick={onSwitch}>
           Regístrate aquí
         </button>
-
       </p>
-
     </div>
   );
 }

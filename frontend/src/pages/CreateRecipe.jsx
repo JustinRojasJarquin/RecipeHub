@@ -41,12 +41,11 @@ function CreateRecipe() {
         <div>
           <p className="eyebrow">Nueva receta</p>
           <h1>Crea una receta desde cero</h1>
+          <p>Completa los datos principales, agrega ingredientes y ordena los pasos.</p>
         </div>
       </header>
 
-      {error && (
-        <p className="panel" style={{ color: "red" }}>{error}</p>
-      )}
+      {error && <p className="alert-message">{error}</p>}
 
       <RecipeForm
         formData={formData}

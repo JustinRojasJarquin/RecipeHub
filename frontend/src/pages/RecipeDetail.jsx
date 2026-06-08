@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import CommentSection from "../components/CommentSection";
 import { deleteRecipe, getRecipeById } from "../services/recipeService";
@@ -15,22 +15,28 @@ function RecipeDetail() {
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchRecipe = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getRecipeById(id);
-      setRecipe(data);
-    } catch {
-      setError("No se pudo cargar la receta.");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
   useEffect(() => {
-    fetchRecipe();
-  }, [fetchRecipe]);
+    let active = true;
+
+    const loadRecipe = async () => {
+      try {
+        const data = await getRecipeById(id);
+        if (!active) return;
+        setRecipe(data);
+        setError(null);
+      } catch {
+        if (active) setError("No se pudo cargar la receta.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadRecipe();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handleDelete = async () => {
     if (!window.confirm("¿Seguro que quieres eliminar esta receta?")) return;
@@ -53,12 +59,12 @@ function RecipeDetail() {
     );
 
   if (loading) return <p className="page-shell">Cargando receta...</p>;
-  if (error) return <p className="page-shell" style={{ color: "red" }}>{error}</p>;
+  if (error) return <p className="page-shell alert-message">{error}</p>;
   if (!recipe) return <p className="page-shell">Receta no encontrada.</p>;
 
   return (
     <main className="page-shell stack">
-      <header className="hero-panel">
+      <header className="hero-panel detail-hero">
         <div>
           <p className="eyebrow">Detalle de receta</p>
           <h1>{recipe.title}</h1>
@@ -86,28 +92,26 @@ function RecipeDetail() {
           <img src={recipe.image} alt={recipe.title} className="detail-image" />
         )}
         <div className="panel stack">
-          <p><strong>Categoría:</strong> {recipe.category}</p>
-          {recipe.prepTime > 0 && (
-            <p><strong>Tiempo:</strong> {recipe.prepTime} min</p>
-          )}
-          {recipe.porciones > 0 && (
-            <p><strong>Porciones:</strong> {recipe.porciones}</p>
-          )}
-          <p><strong>Dificultad:</strong> {recipe.difficulty}</p>
-          <p><strong>Promedio:</strong> {promedio.toFixed(1)} / 5 ⭐</p>
+          <div className="recipe-facts">
+            <span><strong>Categoría:</strong> {recipe.category}</span>
+            {recipe.prepTime > 0 && <span><strong>Tiempo:</strong> {recipe.prepTime} min</span>}
+            {recipe.porciones > 0 && <span><strong>Porciones:</strong> {recipe.porciones}</span>}
+            <span><strong>Dificultad:</strong> {recipe.difficulty}</span>
+            <span><strong>Promedio:</strong> {promedio.toFixed(1)} / 5 ★</span>
+          </div>
           {recipe.tags?.length > 0 && (
             <p><strong>Tags:</strong> {recipe.tags.join(", ")}</p>
           )}
-          <h3>Ingredientes</h3>
-          <ul>
+          <h2>Ingredientes</h2>
+          <ul className="recipe-list">
             {recipe.ingredients.map((item, i) => (
               <li key={i}>
                 {item.cantidad} {item.unidad} de {item.nombre}
               </li>
             ))}
           </ul>
-          <h3>Pasos</h3>
-          <ol>
+          <h2>Pasos</h2>
+          <ol className="recipe-list steps-list">
             {recipe.steps.map((step, i) => (
               <li key={i}>{step}</li>
             ))}

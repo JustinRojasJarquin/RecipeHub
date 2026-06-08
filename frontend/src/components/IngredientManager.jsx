@@ -17,7 +17,7 @@ function IngredientManager({ ingredients, onChange }) {
   return (
     <section className="panel stack">
       <div className="panel-header">
-        <h3>Ingredientes</h3>
+        <h2>Ingredientes</h2>
         <button type="button" className="button secondary" onClick={add}>
           + Añadir
         </button>
