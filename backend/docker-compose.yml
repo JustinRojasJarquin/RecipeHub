@@ -1,9 +1,10 @@
 services:
   backend:
-    image: recipehub-backend
+    build: .
     container_name: recipehub-backend
     ports:
       - "4000:4000"
     env_file:
       - .env
     restart: unless-stopped
+
