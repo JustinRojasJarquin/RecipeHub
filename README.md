@@ -16,6 +16,46 @@ Plataforma colaborativa de recetas de cocina. Desarrollada con Node.js + Express
 
 ---
 
+## Diagrama de Arquitectura
+
+```
+  [Navegador] ──HTTPS──► [No-IP DDNS]  ──resuelve IP──►  [Azure VPS Ubuntu 24.04]
+                          ddns.net                        │
+                                                          │
+                          ┌─────── Azure VPS ─────────────┼──────────────────────┐
+                          │                               │                      │
+                          │       ┌───────────────────────▼──────────────────┐   │
+                          │       │  Nginx (Reverse Proxy + SSL)             │   │
+                          │       │  Puerto 80 → 301 redirect HTTPS          │   │
+                          │       │  Puerto 443 (Let's Encrypt)              │   │
+                          │       │                                          │   │
+                          │       │  /api/*  ──────────────────────────────┐ │   │
+                          │       │  /*  → /var/www/recipehub/             │ │   │
+                          │       └──────────────────┬──────────────────── │─┘   │
+                          │                          │                     │     │
+                          │     ┌────────────────────▼──┐     ┌───────────▼──┐  │
+                          │     │  React Build (Vite)   │     │  🐳 Docker   │  │
+                          │     │  /var/www/recipehub/  │     │              │  │
+                          │     │  index.html + assets  │     │  Express     │  │
+                          │     │  try_files → SPA      │     │  Node.js     │  │
+                          │     └───────────────────────┘     │  Puerto 4000 │  │
+                          │                                    └──────┬───────┘  │
+                          └───────────────────────────────────────────│──────────┘
+                                                                      │ Mongoose
+                                                                      ▼
+                                                          ┌─────────────────────┐
+                                                          │   MongoDB Atlas     │
+                                                          │   (cloud externo)   │
+                                                          │   - usuarios        │
+                                                          │   - recetas         │
+                                                          │   - comentarios     │
+                                                          └─────────────────────┘
+
+  [GitHub Actions] ──SSH──► git pull + docker compose up --build + curl /api/health
+```
+
+---
+
 ## Variables de entorno
 
 Crear el archivo `backend/.env` con las siguientes variables:
