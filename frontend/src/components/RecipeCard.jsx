@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ChefHat, Clock, Users } from "lucide-react";
+import { ChefHat, Clock, UserRound, Users } from "lucide-react";
 
 function RecipeCard({ recipe }) {
   return (
@@ -18,6 +18,10 @@ function RecipeCard({ recipe }) {
           <span className="difficulty-pill">{recipe.difficulty}</span>
         </div>
         <h3>{recipe.title}</h3>
+        <p className="recipe-author">
+          <UserRound size={16} aria-hidden="true" />
+          Publicada por {recipe.authorName}
+        </p>
         <p className="recipe-description">{recipe.description}</p>
         <ul className="meta-list">
           {recipe.prepTime > 0 && (

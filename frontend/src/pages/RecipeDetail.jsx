@@ -68,6 +68,7 @@ function RecipeDetail() {
         <div>
           <p className="eyebrow">Detalle de receta</p>
           <h1>{recipe.title}</h1>
+          <p className="recipe-author">Publicada por {recipe.authorName}</p>
           <p>{recipe.description}</p>
         </div>
         {isAuthor && (
@@ -98,6 +99,7 @@ function RecipeDetail() {
             {recipe.porciones > 0 && <span><strong>Porciones:</strong> {recipe.porciones}</span>}
             <span><strong>Dificultad:</strong> {recipe.difficulty}</span>
             <span><strong>Promedio:</strong> {promedio.toFixed(1)} / 5 ★</span>
+            <span><strong>Autor:</strong> {recipe.authorName}</span>
           </div>
           {recipe.tags?.length > 0 && (
             <p><strong>Tags:</strong> {recipe.tags.join(", ")}</p>

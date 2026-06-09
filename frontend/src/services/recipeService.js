@@ -3,7 +3,12 @@ import api from "./api";
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
-// ingredientes vienen del backend como [{nombre, cantidad, unidad}] — se usan tal cual
+const getAuthorName = (author) => {
+  if (!author || typeof author === "string") return "Autor desconocido";
+  return author.name || author.email || "Autor desconocido";
+};
+
+// Ingredientes vienen del backend como [{ nombre, cantidad, unidad }] y se usan tal cual.
 const mapRecipeFromApi = (recipe) => ({
   id: recipe._id,
   title: recipe.titulo,
@@ -17,6 +22,7 @@ const mapRecipeFromApi = (recipe) => ({
   prepTime: recipe.tiempoMin || 0,
   porciones: recipe.porciones || 1,
   autor: recipe.autorId,
+  authorName: getAuthorName(recipe.autorId),
   rating: 0,
 });
 
